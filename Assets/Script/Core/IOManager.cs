@@ -10,6 +10,16 @@ namespace HiIO
 {
     public class IOManager
     {
+        private static IOManager instance;
+        public static IOManager Instance
+        {
+            get
+            {
+                if (instance == null)
+                    instance = new IOManager();
+                return instance;
+            }
+        }
         public bool IsFolderExist(string param)
         {
             return Directory.Exists(param);
@@ -29,21 +39,21 @@ namespace HiIO
         {
             return File.Exists(param);
         }
-        Action<byte[]> finishLoadFromStreamingAssetsPathHandler;
-        public void ReadFileFromStreamingAssetsPath(string paramPath, Action<byte[]> paramBytesHandler)
+        Action<WWW> finishLoadFromStreamingAssetsPathHandler;
+        public void ReadFileFromStreamingAssetsPath(string paramPath, Action<WWW> paramHandler)
         {
-            finishLoadFromStreamingAssetsPathHandler = paramBytesHandler;
-            paramPath = GetStreamingAssetsPath() + paramPath;
+            finishLoadFromStreamingAssetsPathHandler = paramHandler;
+            paramPath = GetStreamingAssetsPath() + "/" + paramPath;
             WWWLoader.Instance.Startload(paramPath, FinishLoadFromStreamingAssetsPath);
         }
         private void FinishLoadFromStreamingAssetsPath(WWW paramWWW)
         {
-            finishLoadFromStreamingAssetsPathHandler(paramWWW.bytes);
+            finishLoadFromStreamingAssetsPathHandler(paramWWW);
         }
 
         public byte[] ReadFileFromPersistentDataPath(string param)
         {
-            param = Application.persistentDataPath + param;
+            param = Application.persistentDataPath + "/" + param;
             return ReadFile(param);
         }
         public byte[] ReadFile(string param)
@@ -65,13 +75,16 @@ namespace HiIO
         }
         public void WriteFileToPersistentDataPath(string paramPath, byte[] paramBytes)
         {
-            paramPath = Application.persistentDataPath + paramPath;
+            paramPath = Application.persistentDataPath + "/" + paramPath;
             WriteFile(paramPath, paramBytes);
         }
         public void WriteFile(string paramPath, byte[] paramBytes)
         {
             try
             {
+                string directory = Path.GetDirectoryName(paramPath);
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
                 using (FileStream fs = new FileStream(paramPath, FileMode.Create, FileAccess.Write))
                 {
                     fs.Write(paramBytes, 0, paramBytes.Length);
@@ -88,16 +101,12 @@ namespace HiIO
         }
         private string GetStreamingAssetsPath()
         {
-            if ((Application.platform == RuntimePlatform.WindowsEditor) || (Application.platform == RuntimePlatform.OSXEditor))
-                return Application.streamingAssetsPath + "/";
-            else if ((Application.platform == RuntimePlatform.WindowsWebPlayer) || (Application.platform == RuntimePlatform.OSXWebPlayer))
-                return "StreamingAssets/";
-            else if (Application.platform == RuntimePlatform.IPhonePlayer)
-                return Application.dataPath + "/Raw/";
-            else if (Application.platform == RuntimePlatform.Android)
-                return "jar:file://" + Application.dataPath + "!/assets/" + "/";
-            else
-                return "Cann't distinguish your platform";
+# if UNITY_EDITOR || UNITY_IPHONE
+            string path = "file://" + Application.streamingAssetsPath;
+#else
+            string path = Application.streamingAssetsPath;
+#endif
+            return path;
         }
     }
 }

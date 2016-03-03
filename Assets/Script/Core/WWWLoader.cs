@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿//****************************************************************************
+// Description:
+// Author: hiramtan@qq.com
+//****************************************************************************
+using UnityEngine;
 using System.Collections;
 using System;
 
@@ -16,7 +20,10 @@ public class WWWLoader : MonoBehaviour
     }
     public void Startload(string downloadUrl, Action<WWW> callBackHandler = null)
     {
-        StartCoroutine(Load(downloadUrl, callBackHandler));
+        lock(this)
+        {
+            StartCoroutine(Load(downloadUrl, callBackHandler));
+        }
     }
     private IEnumerator Load(string downloadUrl, Action<WWW> callBackHandler)
     {
