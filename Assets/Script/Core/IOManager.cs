@@ -8,7 +8,7 @@ using UnityEngine;
 using System.Collections;
 namespace HiIO
 {
-    public class MyIO
+    public class IOManager
     {
         public bool IsFolderExist(string param)
         {
